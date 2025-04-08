@@ -326,9 +326,10 @@
 
       integer (kind=int_kind) :: &
          i, j, n, k, & ! loop indices
+         combo, nn, kk, & ! more indices
          nt_fsd        ! fsd tracer index
       logical (kind=log_kind) :: tr_fsd
-      real (kind=dbl_kind) :: floeshape, puny
+      real (kind=dbl_kind) :: floeshape, puny,tot
 
       real (kind=dbl_kind) :: workb, workc
       real (kind=dbl_kind), dimension(nx_block,ny_block) :: worka
@@ -461,7 +462,7 @@
          do i = 1, nx_block
             do k = 1, nfsd_hist
                worke(i,j,k)=c0
-               do n = 1, ncat_hist
+               do n = 1, ncat_hist   ! CMB verified that this is output correctly to history
                   worke(i,j,k) = worke(i,j,k) + (trcrn(i,j,nt_fsd+k-1,n,iblk) &
                                * aicen(i,j,n,iblk)/floe_binwidth(k))
                end do
@@ -492,12 +493,23 @@
       if (allocated(a4Df)) then
 
       if (f_afsdn(1:1) /= 'x') then
+
          do n = 1, ncat_hist
          do k = 1, nfsd_hist
          do j = 1, ny_block
          do i = 1, nx_block
-            workd(i,j,k,n) = trcrn(i,j,nt_fsd+k-1,n,iblk) &
-                           * aicen(i,j,n,iblk)/floe_binwidth(k)
+            ! The history file for this 4D variable mushed together fsd and itd indices in
+            ! a messed up way. The following puts that right again. Me thinks this is an erro
+            ! with the netcdf library so maybe some day this can be removed.
+            combo = (n-1)*12+k
+            nn =  MOD(combo,5)
+            if (nn==0) then
+               nn=5
+            endif
+            kk = (combo-nn)/5 + 1
+
+            workd(i,j,kk,nn) = trcrn(i,j,nt_fsd+k-1,n,iblk) ! &
+!                           * aicen(i,j,n,iblk)/floe_binwidth(k)
          end do
          end do
          end do
