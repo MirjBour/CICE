@@ -284,7 +284,7 @@
           grid_atm_dynu, grid_atm_dynv, grid_ocn_dynu, grid_ocn_dynv
       use ice_state, only: aice, aiU, vice, vsno, uvel, vvel, uvelN, vvelN, &
           uvelE, vvelE, divu, shear, vort, &
-          aice_init, aice0, aicen, vicen, strength
+          aice_init, aice0, aicen, vicen, strength, trcrn
       use ice_timers, only: timer_dynamics, timer_bound, &
           ice_timer_start, ice_timer_stop, timer_evp
       use ice_dyn_shared, only: evp_algorithm, stack_fields, unstack_fields, &
@@ -293,6 +293,7 @@
           iceTmask, iceUmask, iceEmask, iceNmask, &
           dyn_haloUpdate, fld2, fld3, fld4
       use ice_dyn_evp1d, only: dyn_evp1d_run
+      use ice_arrays_column, only: floe_rad_c
 
       real (kind=dbl_kind), intent(in) :: &
          dt      ! time step
@@ -542,7 +543,9 @@
                                          aice0    = aice0   (i,j,  iblk), &
                                          aicen    = aicen   (i,j,:,iblk), &
                                          vicen    = vicen   (i,j,:,iblk), &
-                                         strength = strength(i,j,  iblk))
+                                         strength = strength(i,j,  iblk), &
+                                         trcrn    = trcrn   (i,j,:,:,iblk), &  
+                                         floe_rad_c = floe_rad_c(:))
             enddo  ! ij
 
          enddo  ! iblk
@@ -599,7 +602,9 @@
                                          aice0    = aice0   (i,j,  iblk), &
                                          aicen    = aicen   (i,j,:,iblk), &
                                          vicen    = vicen   (i,j,:,iblk), &
-                                         strength = strength(i,j,  iblk) )
+                                         strength = strength(i,j,  iblk), & 
+                                         trcrn    = trcrn (i,j,:,:,iblk), & 
+                                         floe_rad_c = floe_rad_c(:))
             enddo  ! ij
 
 
