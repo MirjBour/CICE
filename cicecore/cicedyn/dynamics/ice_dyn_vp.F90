@@ -392,9 +392,10 @@
                                        aice0 = aice0      (i,j,  iblk), &
                                        aicen = aicen      (i,j,:,iblk), &
                                        vicen = vicen      (i,j,:,iblk), &
-                                       strength = strength(i,j,  iblk), &
                                        trcrn = trcrn    (i,j,:,:,iblk), &        
-                                       floe_rad_c = floe_rad_c(:))
+                                       floe_rad_c = floe_rad_c(:), &
+                                       strength = strength(i,j,  iblk))
+ )
          enddo  ! ij
 
       enddo  ! iblk
