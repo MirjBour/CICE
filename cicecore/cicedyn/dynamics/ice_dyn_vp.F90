@@ -387,15 +387,15 @@
          do ij = 1, icellT(iblk)
             i = indxTi(ij, iblk)
             j = indxTj(ij, iblk)
-            call icepack_ice_strength (aice  = aice       (i,j,  iblk), &
-                                       vice  = vice       (i,j,  iblk), &
-                                       aice0 = aice0      (i,j,  iblk), &
-                                       aicen = aicen      (i,j,:,iblk), &
-                                       vicen = vicen      (i,j,:,iblk), &
-                                       trcrn = trcrn    (i,j,:,:,iblk), &        
-                                       floe_rad_c = floe_rad_c(:), &
-                                       strength = strength(i,j,  iblk))
- )
+            call icepack_ice_strength (ncat,                 &
+                                       aice    (i,j,  iblk), &
+                                       vice    (i,j,  iblk), &
+                                       aice0   (i,j,  iblk), &
+                                       aicen   (i,j,:,iblk), &
+                                       vicen   (i,j,:,iblk), &
+                                       trcrn   (i,j,:,:,iblk), &        
+                                       floe_rad_c(:), &
+                                       strength(i,j,  iblk))
          enddo  ! ij
 
       enddo  ! iblk
