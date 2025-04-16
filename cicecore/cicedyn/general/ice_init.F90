@@ -63,7 +63,7 @@
           diag_file, print_global, print_points, latpnt, lonpnt, &
           debug_model, debug_model_step, debug_model_task, &
           debug_model_i, debug_model_j, debug_model_iblk
-      use ice_domain, only: close_boundaries
+      use ice_domain, only: close_boundaries, orca_halogrid
       use ice_domain_size, only: &
           ncat, nilyr, nslyr, nblyr, nfsd, nfreq, &
           n_iso, n_aero, n_zaero, n_algae, &
@@ -109,7 +109,7 @@
           grid_file, gridcpl_file, kmt_file, &
           bathymetry_file, use_bathymetry, &
           bathymetry_format, kmt_type, &
-          grid_type, grid_format, grid_outfile, &
+          grid_type, grid_format, &
           grid_ice, grid_ice_thrm, grid_ice_dynu, grid_ice_dynv, &
           grid_ocn, grid_ocn_thrm, grid_ocn_dynu, grid_ocn_dynv, &
           grid_atm, grid_atm_thrm, grid_atm_dynu, grid_atm_dynv, &
@@ -160,11 +160,11 @@
         windmin, drhosdwind, snwlvlfac
 
       integer (kind=int_kind) :: ktherm, kstrength, krdg_partic, krdg_redist, natmiter, &
-        kitd, kcatbound, ktransport
+        kitd, kcatbound, ktransport, fsdfract
 
       character (len=char_len) :: shortwave, albedo_type, conduct, fbot_xfer_type, &
         tfrz_option, saltflux_option, frzpnd, atmbndy, wave_spec_type, snwredist, snw_aging_table, &
-        congel_freeze, capping_method, snw_ssp_table
+        capping_method, snw_ssp_table
 
       logical (kind=log_kind) :: calc_Tsfc, formdrag, highfreq, calc_strair, wave_spec, &
         sw_redist, calc_dragio, use_smliq_pnd, snwgrain
@@ -174,7 +174,6 @@
       logical (kind=log_kind) :: tr_pond_lvl, tr_pond_topo
       integer (kind=int_kind) :: numin, numax  ! unit number limits
       logical (kind=log_kind) :: lcdf64  ! deprecated, backwards compatibility
-      logical (kind=log_kind) :: orca_halogrid !deprecated
 
       integer (kind=int_kind) :: rplvl, rptopo
       real (kind=dbl_kind)    :: Cf, ksno, puny, ice_ref_salinity, Tocnfrz
@@ -217,7 +216,7 @@
         ncat,           nilyr,           nslyr,         nblyr,          &
         kcatbound,      gridcpl_file,    dxrect,        dyrect,         &
         dxscale,        dyscale,         lonrefrect,    latrefrect,     &
-        scale_dxdy,     grid_outfile,                                   &
+        scale_dxdy,                                                     &
         close_boundaries, orca_halogrid, grid_ice,      kmt_type,       &
         grid_atm,       grid_ocn
 
@@ -246,7 +245,7 @@
         brlx,           arlx,           ssh_stress,                     &
         advection,      coriolis,       kridge,         ktransport,     &
         kstrength,      krdg_partic,    krdg_redist,    mu_rdg,         &
-        e_yieldcurve,   e_plasticpot,   visc_method,              &
+        e_yieldcurve,   e_plasticpot,   visc_method,    fsdfract,       &
         maxits_nonlin,  precond,        dim_fgmres,                     &
         dim_pgmres,     maxits_fgmres,  maxits_pgmres,  monitor_nonlin, &
         monitor_fgmres, monitor_pgmres, reltol_nonlin,  reltol_fgmres,  &
@@ -281,7 +280,7 @@
         highfreq,       natmiter,        atmiter_conv,  calc_dragio,    &
         ustar_min,      emissivity,      iceruf,        iceruf_ocn,     &
         fbot_xfer_type, update_ocn_f,    l_mpond_fresh, tfrz_option,    &
-        saltflux_option,ice_ref_salinity,cpl_frazil,    congel_freeze,  &
+        saltflux_option,ice_ref_salinity,cpl_frazil,                    &
         oceanmixed_ice, restore_ice,     restore_ocn,   trestore,       &
         precip_units,   default_season,  wave_spec_type,nfreq,          &
         atm_data_type,  ocn_data_type,   bgc_data_type, fe_data_type,   &
@@ -332,7 +331,6 @@
       bfbflag = 'off'        ! off = optimized
       diag_type = 'stdout'
       diag_file = 'ice_diag.d'
-      histfreq(:) = 'x'
       histfreq(1) = '1'      ! output frequency option for different streams
       histfreq(2) = 'h'      ! output frequency option for different streams
       histfreq(3) = 'd'      ! output frequency option for different streams
@@ -384,8 +382,7 @@
       grid_atm     = 'A'          ! underlying atm forcing/coupling grid
       grid_ocn     = 'A'          ! underlying atm forcing/coupling grid
       gridcpl_file = 'unknown_gridcpl_file'
-      grid_outfile = .false.      ! write out one-time grid history file
-      orca_halogrid = .false.     ! orca haloed grid - deprecated
+      orca_halogrid = .false.     ! orca haloed grid
       bathymetry_file   = 'unknown_bathymetry_file'
       bathymetry_format = 'default'
       use_bathymetry    = .false.
@@ -411,6 +408,7 @@
       revised_evp = .false.   ! if true, use revised procedure for evp dynamics
       yield_curve = 'ellipse' ! yield curve
       kstrength = 1           ! 1 = Rothrock 75 strength, 0 = Hibler 79
+      fsdfract = 0            ! 0 = no additonal fracture scheme from fsd, 1 = additional fracture
       Pstar = 2.75e4_dbl_kind ! constant in Hibler strength formula (kstrength = 0)
       Cstar = 20._dbl_kind    ! constant in Hibler strength formula (kstrength = 0)
       krdg_partic = 1         ! 1 = new participation, 0 = Thorndike et al 75
@@ -540,7 +538,6 @@
       atmiter_conv    = c0        ! ustar convergence criteria
       precip_units    = 'mks'     ! 'mm_per_month' or
                                   ! 'mm_per_sec' = 'mks' = kg/m^2 s
-      congel_freeze   = 'two-step'! congelation freezing method
       tfrz_option     = 'mushy'   ! freezing temp formulation
       saltflux_option = 'constant'    ! saltflux calculation
       ice_ref_salinity = 4.0_dbl_kind ! Ice reference salinity for coupling
@@ -962,7 +959,6 @@
       call broadcast_scalar(cpl_bgc,              master_task)
       call broadcast_scalar(incond_dir,           master_task)
       call broadcast_scalar(incond_file,          master_task)
-      call broadcast_scalar(version_name,         master_task)
       call broadcast_scalar(dump_last,            master_task)
       call broadcast_scalar(restart_file,         master_task)
       call broadcast_scalar(restart,              master_task)
@@ -995,7 +991,6 @@
       call broadcast_scalar(grid_atm,             master_task)
       call broadcast_scalar(grid_file,            master_task)
       call broadcast_scalar(gridcpl_file,         master_task)
-      call broadcast_scalar(grid_outfile,         master_task)
       call broadcast_scalar(orca_halogrid,        master_task)
       call broadcast_scalar(bathymetry_file,      master_task)
       call broadcast_scalar(bathymetry_format,    master_task)
@@ -1014,6 +1009,7 @@
       call broadcast_scalar(revised_evp,          master_task)
       call broadcast_scalar(yield_curve,          master_task)
       call broadcast_scalar(kstrength,            master_task)
+      call broadcast_scalar(fsdfract,             master_task)
       call broadcast_scalar(Pstar,                master_task)
       call broadcast_scalar(Cstar,                master_task)
       call broadcast_scalar(krdg_partic,          master_task)
@@ -1133,7 +1129,6 @@
       call broadcast_scalar(wave_spec_type,       master_task)
       call broadcast_scalar(wave_spec_file,       master_task)
       call broadcast_scalar(nfreq,                master_task)
-      call broadcast_scalar(congel_freeze,        master_task)
       call broadcast_scalar(tfrz_option,          master_task)
       call broadcast_scalar(saltflux_option,      master_task)
       call broadcast_scalar(ice_ref_salinity,     master_task)
@@ -1202,6 +1197,10 @@
       call broadcast_scalar(sw_redist,            master_task)
       call broadcast_scalar(sw_frac,              master_task)
       call broadcast_scalar(sw_dtemp,             master_task)
+
+#ifdef CESMCOUPLED
+      pointer_file = trim(pointer_file) // trim(inst_suffix)
+#endif
 
       !-----------------------------------------------------------------
       ! update defaults
@@ -1834,20 +1833,6 @@
          endif
       endif
 
-      if (orca_halogrid) then
-         if (my_task == master_task) then
-            write(nu_diag,*) subname//' ERROR: orca_halogrid has been deprecated'
-         endif
-         abort_list = trim(abort_list)//":63"
-      endif
-
-      if (trim(grid_type) == 'cpom_grid') then
-         if (my_task == master_task) then
-            write(nu_diag,*) subname//" ERROR: grid_type = 'cpom_grid' has been deprecated"
-         endif
-         abort_list = trim(abort_list)//":64"
-      endif
-
       ice_IOUnitsMinUnit = numin
       ice_IOUnitsMaxUnit = numax
 
@@ -1971,12 +1956,7 @@
          write(nu_diag,1030) '   grid_ocn_dynu  = ',trim(grid_ocn_dynu)
          write(nu_diag,1030) '   grid_ocn_dynv  = ',trim(grid_ocn_dynv)
          write(nu_diag,1030) ' kmt_type         = ',trim(kmt_type)
-         if (trim(grid_type) == 'rectangular') then
-            write(nu_diag,1004) 'lon/lat refrect   = ',lonrefrect,latrefrect
-            write(nu_diag,1004) 'dx/dy rect (cm)   = ',dxrect,dyrect
-            write(nu_diag,1010) 'scale_dxdy        = ',scale_dxdy
-            write(nu_diag,1004) 'dx/dy scale       = ',dxscale,dyscale
-         else
+         if (trim(grid_type) /= 'rectangular') then
             if (use_bathymetry) then
                tmpstr2 = ' : bathymetric input data is used'
             else
@@ -2335,7 +2315,6 @@
          if (trim(tfrz_option) == 'constant') then
             write(nu_diag,1002) ' Tocnfrz          = ', Tocnfrz
          endif
-         write(nu_diag,1030) ' congel_freeze    = ', trim(congel_freeze)
          if (update_ocn_f) then
             tmpstr2 = ' : frazil water/salt fluxes included in ocean fluxes'
          else
@@ -2533,7 +2512,6 @@
          write(nu_diag,*) '===================================== '
          if (trim(runid) /= 'unknown') &
          write(nu_diag,1031) ' runid            = ', trim(runid)
-         write(nu_diag,1031) ' version_name     = ', trim(version_name)
          write(nu_diag,1031) ' runtype          = ', trim(runtype)
          write(nu_diag,1021) ' year_init        = ', year_init
          write(nu_diag,1021) ' month_init       = ', month_init
@@ -2556,12 +2534,11 @@
          write(nu_diag,1031) ' bfbflag          = ', trim(bfbflag)
          write(nu_diag,1021) ' numin            = ', numin
          write(nu_diag,1021) ' numax            = ', numax
-         write(nu_diag,1011) ' grid_outfile     = ', grid_outfile
-         write(nu_diag,1033) ' histfreq         = ', histfreq(1:max_nstrm-1)
-         write(nu_diag,1023) ' histfreq_n       = ', histfreq_n(1:max_nstrm-1)
-         write(nu_diag,1033) ' histfreq_base    = ', histfreq_base(1:max_nstrm-1)
-         write(nu_diag,1013) ' hist_avg         = ', hist_avg(1:max_nstrm-1)
-         write(nu_diag,1033) ' hist_suffix      = ', hist_suffix(1:max_nstrm-1)
+         write(nu_diag,1033) ' histfreq         = ', histfreq(:)
+         write(nu_diag,1023) ' histfreq_n       = ', histfreq_n(:)
+         write(nu_diag,1033) ' histfreq_base    = ', histfreq_base(:)
+         write(nu_diag,1013) ' hist_avg         = ', hist_avg(:)
+         write(nu_diag,1033) ' hist_suffix      = ', hist_suffix(:)
          write(nu_diag,1031) ' history_dir      = ', trim(history_dir)
          write(nu_diag,1031) ' history_file     = ', trim(history_file)
          write(nu_diag,1021) ' history_precision= ', history_precision
@@ -2577,9 +2554,9 @@
             write(nu_diag,1039) ' Initial condition will be written in ', &
                                trim(incond_dir)
          endif
-         write(nu_diag,1033) ' dumpfreq         = ', dumpfreq(1:max_nstrm-1)
-         write(nu_diag,1023) ' dumpfreq_n       = ', dumpfreq_n(1:max_nstrm-1)
-         write(nu_diag,1033) ' dumpfreq_base    = ', dumpfreq_base(1:max_nstrm-1)
+         write(nu_diag,1033) ' dumpfreq         = ', dumpfreq(:)
+         write(nu_diag,1023) ' dumpfreq_n       = ', dumpfreq_n(:)
+         write(nu_diag,1033) ' dumpfreq_base    = ', dumpfreq_base(:)
          write(nu_diag,1011) ' dump_last        = ', dump_last
          write(nu_diag,1011) ' restart          = ', restart
          write(nu_diag,1031) ' restart_dir      = ', trim(restart_dir)
@@ -2605,6 +2582,7 @@
             if (trim(kmt_type) == 'file') &
                write(nu_diag,1031) ' kmt_file         = ', trim(kmt_file)
          endif
+         write(nu_diag,1011) ' orca_halogrid    = ', orca_halogrid
 
          write(nu_diag,1011) ' conserv_check    = ', conserv_check
 
@@ -2737,7 +2715,7 @@
          emissivity_in=emissivity, snw_ssp_table_in=snw_ssp_table, hi_min_in=hi_min, &
          ahmax_in=ahmax, shortwave_in=shortwave, albedo_type_in=albedo_type, R_ice_in=R_ice, R_pnd_in=R_pnd, &
          R_snw_in=R_snw, dT_mlt_in=dT_mlt, rsnw_mlt_in=rsnw_mlt, &
-         kstrength_in=kstrength, krdg_partic_in=krdg_partic, krdg_redist_in=krdg_redist, mu_rdg_in=mu_rdg, &
+         kstrength_in=kstrength, krdg_partic_in=krdg_partic, krdg_redist_in=krdg_redist, fsdfract_in=fsdfract, mu_rdg_in=mu_rdg, &
          atmbndy_in=atmbndy, calc_strair_in=calc_strair, formdrag_in=formdrag, highfreq_in=highfreq, &
          kitd_in=kitd, kcatbound_in=kcatbound, hs0_in=hs0, dpscale_in=dpscale, frzpnd_in=frzpnd, &
          rfracmin_in=rfracmin, rfracmax_in=rfracmax, pndaspect_in=pndaspect, hs1_in=hs1, hp1_in=hp1, &
@@ -2747,7 +2725,7 @@
          aspect_rapid_mode_in=aspect_rapid_mode, dSdt_slow_mode_in=dSdt_slow_mode, &
          phi_c_slow_mode_in=phi_c_slow_mode, phi_i_mushy_in=phi_i_mushy, conserv_check_in=conserv_check, &
          wave_spec_type_in = wave_spec_type, wave_spec_in=wave_spec, nfreq_in=nfreq, &
-         update_ocn_f_in=update_ocn_f, cpl_frazil_in=cpl_frazil, congel_freeze_in=congel_freeze, &
+         update_ocn_f_in=update_ocn_f, cpl_frazil_in=cpl_frazil, &
          tfrz_option_in=tfrz_option, kalg_in=kalg, fbot_xfer_type_in=fbot_xfer_type, &
          saltflux_option_in=saltflux_option, ice_ref_salinity_in=ice_ref_salinity, &
          Pstar_in=Pstar, Cstar_in=Cstar, iceruf_in=iceruf, iceruf_ocn_in=iceruf_ocn, calc_dragio_in=calc_dragio, &
@@ -2770,8 +2748,7 @@
 
  1000    format (a20,1x,f13.6,1x,a) ! float
  1002    format (a20,5x,f9.2,1x,a)
- 1003    format (a20,1x,g13.4,1x,a)
- 1004    format (a20,1x,2g13.4,1x,a)
+ 1003    format (a20,1x,G13.4,1x,a)
  1009    format (a20,1x,d13.6,1x,a)
  1010    format (a20,8x,l6,1x,a)  ! logical
  1011    format (a20,1x,l6)
@@ -3046,7 +3023,8 @@
          enddo
 
          if (tmask(i,j,iblk)) &
-            call icepack_aggregate(aicen = aicen(i,j,:,iblk),     &
+            call icepack_aggregate(ncat  = ncat,                  &
+                                   aicen = aicen(i,j,:,iblk),     &
                                    trcrn = trcrn(i,j,:,:,iblk),   &
                                    vicen = vicen(i,j,:,iblk),     &
                                    vsnon = vsnon(i,j,:,iblk),     &
@@ -3055,6 +3033,7 @@
                                    vice  = vice (i,j,  iblk),     &
                                    vsno  = vsno (i,j,  iblk),     &
                                    aice0 = aice0(i,j,  iblk),     &
+                                   ntrcr = ntrcr,                 &
                                    trcr_depend   = trcr_depend(:),   &
                                    trcr_base     = trcr_base(:,:),   &
                                    n_trcr_strata = n_trcr_strata(:), &
@@ -3330,9 +3309,23 @@
          ! location of ice
          !---------------------------------------------------------
 
-         icells = 0
+         if (trim(ice_data_type) == 'box2001') then
 
-         if (trim(ice_data_type) == 'boxslotcyl') then
+            ! place ice on left side of domain
+            icells = 0
+            do j = jlo, jhi
+            do i = ilo, ihi
+               if (tmask(i,j)) then
+                  if (ULON(i,j) < -50./rad_to_deg) then
+                     icells = icells + 1
+                     indxi(icells) = i
+                     indxj(icells) = j
+                  endif            ! ULON
+               endif               ! tmask
+            enddo                  ! i
+            enddo                  ! j
+
+         elseif (trim(ice_data_type) == 'boxslotcyl') then
 
             ! Geometric configuration of the slotted cylinder
             diam     = p3 *dxrect*(nx_global-1)
@@ -3364,10 +3357,8 @@
             enddo
             enddo
 
-         elseif (trim(ice_data_type) == 'uniform' .or. trim(ice_data_type) == 'box2001') then
+         elseif (trim(ice_data_type) == 'uniform') then
             ! all cells not land mask are ice
-            ! box2001 used to have a check for west of 50W, this was changed, so now box2001 is 
-            ! the same as uniform.  keep box2001 option for backwards compatibility.
             icells = 0
             do j = jlo, jhi
             do i = ilo, ihi
@@ -3521,6 +3512,7 @@
                                       Sprofile = salinz(i,j,:),         &
                                       Tprofile = Tmltz(i,j,:),          &
                                       Tsfc  = Tsfc,                     &
+                                      nilyr = nilyr,     nslyr = nslyr, &
                                       qin   = qin(:),    qsn = qsn(:))
 
                ! surface temperature
