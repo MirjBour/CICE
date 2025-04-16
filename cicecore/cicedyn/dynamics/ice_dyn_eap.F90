@@ -122,9 +122,11 @@
           tarear, uarear, grid_average_X2Y, &
           grid_atm_dynu, grid_atm_dynv, grid_ocn_dynu, grid_ocn_dynv
       use ice_state, only: aice, aiU, vice, vsno, uvel, vvel, divu, shear, vort, &
-          aice_init, aice0, aicen, vicen, strength
+          aice_init, aice0, aicen, vicen, strength, trcrn
       use ice_timers, only: timer_dynamics, timer_bound, &
           ice_timer_start, ice_timer_stop
+
+      use ice_arrays_column, only: floe_rad_c
 
       real (kind=dbl_kind), intent(in) :: &
          dt      ! time step
@@ -353,11 +355,14 @@
          do ij = 1, icellT(iblk)
             i = indxTi(ij, iblk)
             j = indxTj(ij, iblk)
-            call icepack_ice_strength(aice     = aice    (i,j,  iblk), &
+            call icepack_ice_strength(ncat=ncat,                 &
+                                      aice     = aice    (i,j,  iblk), &
                                       vice     = vice    (i,j,  iblk), &
                                       aice0    = aice0   (i,j,  iblk), &
                                       aicen    = aicen   (i,j,:,iblk), &
                                       vicen    = vicen   (i,j,:,iblk), &
+                                      trcrn    = trcrn   (i,j,:,:,iblk), &  
+                                      floe_rad_c = floe_rad_c(:), &
                                       strength = strength(i,j,  iblk) )
          enddo  ! ij
       enddo  ! iblk
