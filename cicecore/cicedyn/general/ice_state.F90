@@ -117,7 +117,8 @@
          divu     , & ! strain rate I component, velocity divergence (1/s)
          shear    , & ! strain rate II component (1/s)
          vort     , & ! vorticity (1/s)
-         strength     ! ice strength (N/m)
+         strength , & ! ice strength (N/m)
+         fract        ! fracture parameter
 
       !-----------------------------------------------------------------
       ! ice state at start of time step, saved for later in the step
@@ -166,6 +167,7 @@
          shear     (nx_block,ny_block,max_blocks) , & ! strain rate II component (1/s)
          vort      (nx_block,ny_block,max_blocks) , & ! vorticity (1/s)
          strength  (nx_block,ny_block,max_blocks) , & ! ice strength (N/m)
+         fract     (nx_block,ny_block,max_blocks) , & ! fracture parameter
          aice_init (nx_block,ny_block,max_blocks) , & ! initial concentration of ice, for diagnostics
          aicen     (nx_block,ny_block,ncat,max_blocks) , & ! concentration of ice
          vicen     (nx_block,ny_block,ncat,max_blocks) , & ! volume per unit area of ice (m)
