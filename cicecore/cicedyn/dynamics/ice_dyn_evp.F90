@@ -284,7 +284,7 @@
           grid_atm_dynu, grid_atm_dynv, grid_ocn_dynu, grid_ocn_dynv
       use ice_state, only: aice, aiU, vice, vsno, uvel, vvel, uvelN, vvelN, &
           uvelE, vvelE, divu, shear, vort, &
-          aice_init, aice0, aicen, vicen, strength, trcrn
+          aice_init, aice0, aicen, vicen, strength, trcrn, fract
       use ice_timers, only: timer_dynamics, timer_bound, &
           ice_timer_start, ice_timer_stop, timer_evp
       use ice_dyn_shared, only: evp_algorithm, stack_fields, unstack_fields, &
@@ -535,6 +535,7 @@
             !-----------------------------------------------------------------
 
             strength(:,:,iblk) = c0  ! initialize
+            fract(:,:,iblk) = c0     ! initialize
             do ij = 1, icellT(iblk)
                i = indxTi(ij, iblk)
                j = indxTj(ij, iblk)
@@ -545,7 +546,8 @@
                                          aicen    = aicen   (i,j,:,iblk), &
                                          vicen    = vicen   (i,j,:,iblk), &
                                          trcrn    = trcrn   (i,j,:,:,iblk), &  
-                                         floe_rad_c = floe_rad_c(:), &
+                                         floe_rad_c = floe_rad_c(:),      &
+                                         fract    = fract   (i,j,  iblk), &
                                          strength = strength(i,j,  iblk) )
 
             enddo  ! ij
@@ -605,9 +607,10 @@
                                          aice0    = aice0   (i,j,  iblk), &
                                          aicen    = aicen   (i,j,:,iblk), &
                                          vicen    = vicen   (i,j,:,iblk), &
-                                         strength = strength(i,j,  iblk), & 
-                                         trcrn    = trcrn (i,j,:,:,iblk), & 
-                                         floe_rad_c = floe_rad_c(:))
+                                         trcrn    = trcrn   (i,j,:,:,iblk), &  
+                                         floe_rad_c = floe_rad_c(:),      &
+                                         fract    = fract   (i,j,  iblk), &
+                                         strength = strength(i,j,  iblk) )
             enddo  ! ij
 
 
