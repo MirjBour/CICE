@@ -279,7 +279,8 @@
            f_strocnxE  = 'x', f_strocnyE   = 'x', &
            f_strintxE  = 'x', f_strintyE   = 'x', &
            f_taubxE    = 'x', f_taubyE     = 'x', &
-           f_strength  = 'm', f_vort       = 'm', &
+           f_strength  = 'm', f_fract      = 'x', &
+           f_vort       = 'm', &
            f_divu      = 'm', f_shear      = 'm', &
            f_sig1      = 'm', f_sig2       = 'm', &
            f_sigP      = 'm', &
@@ -451,7 +452,8 @@
 !          f_strocnxE,  f_strocnyE , &
 !          f_strintxE,  f_strintyE , &
 !          f_taubxE,    f_taubyE   , &
-           f_strength,  f_vort     , &
+           f_strength,  f_fract    , &
+           f_vort     , &
            f_divu,      f_shear    , &
            f_sig1,      f_sig2     , &
            f_sigP,      &
@@ -653,7 +655,8 @@
            n_strocnxE   , n_strocnyE   , &
            n_strintxE   , n_strintyE   , &
            n_taubxE     , n_taubyE     , &
-           n_strength   , n_vort       , &
+           n_strength   , n_fract      , &
+           n_vort       , &
            n_divu       , n_shear      , &
            n_sig1       , n_sig2       , &
            n_sigP       , &
@@ -822,29 +825,19 @@
                  write(ncfile,'(a,a,i4.4,a,a)') &
                        history_file(1:lenstr(history_file))//trim(cstream),'.', &
                        iyear,'.',trim(suffix)
-              elseif (histfreq(ns) == 'g') then
-                 write(ncfile,'(a,a,a,a)')  &
-                       history_file(1:lenstr(history_file)),'_grid', &
-                       '.',trim(suffix)
               endif
 
            else                     ! instantaneous
-              if (histfreq(ns) == 'g') then
-                 write(ncfile,'(a,a,a,a)')  &
-                       history_file(1:lenstr(history_file)),'_grid', &
-                       '.',trim(suffix)
-              else
-                 write(ncfile,'(a,a,i4.4,a,i2.2,a,i2.2,a,i5.5,a,a)')  &
-                       history_file(1:lenstr(history_file))//trim(cstream),'_inst.', &
-                       iyear,'-',imonth,'-',iday,'-',msec,'.',trim(suffix)
-              endif
+              write(ncfile,'(a,a,i4.4,a,i2.2,a,i2.2,a,i5.5,a,a)')  &
+                    history_file(1:lenstr(history_file))//trim(cstream),'_inst.', &
+                    iyear,'-',imonth,'-',iday,'-',msec,'.',trim(suffix)
            endif
 
         endif
 
         ! Check whether the filename is already in use.
         ! Same filename in multiple history streams leads to files being overwritten (not good).
-        ! The current filename convention means we just have to check latest filename,
+        ! The current filename convention means we just have to check latest filename, 
         ! not all filenames ever generated because of use of current model date/time in filename.
 
         ! write(nu_diag,'(2a,i2,1x,a)') subname, 'debug ncfile= ',ns,trim(ncfile)

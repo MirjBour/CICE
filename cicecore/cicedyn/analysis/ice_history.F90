@@ -69,7 +69,7 @@
       use ice_domain_size, only: max_blocks, max_nstrm, nilyr, nslyr, nblyr, ncat, nfsd
       use ice_dyn_shared, only: kdyn
       use ice_flux, only: mlt_onset, frz_onset, albcnt, snwcnt
-      use ice_grid, only: grid_ice, grid_outfile, &
+      use ice_grid, only: grid_ice, &
           grid_atm_thrm, grid_atm_dynu, grid_atm_dynv, &
           grid_ocn_thrm, grid_ocn_dynu, grid_ocn_dynv
       use ice_history_shared ! everything
@@ -239,14 +239,15 @@
          call get_fileunit(nu_nml)
          open (nu_nml, file=trim(nml_filename), status='old',iostat=nml_error)
          if (nml_error /= 0) then
-            call abort_ice(subname//' ERROR: '//trim(nml_name)//' open file '// &
-               trim(nml_filename), file=__FILE__, line=__LINE__)
+            call abort_ice(subname//'ERROR: '//trim(nml_name)//' open file '// &
+               trim(nml_filename), &
+               file=__FILE__, line=__LINE__)
          endif
 
          ! seek to this namelist
          call goto_nml(nu_nml,trim(nml_name),nml_error)
          if (nml_error /= 0) then
-            call abort_ice(subname//' ERROR: searching for '// trim(nml_name), &
+            call abort_ice(subname//'ERROR: searching for '// trim(nml_name), &
                file=__FILE__, line=__LINE__)
          endif
 
@@ -259,7 +260,7 @@
                ! backspace and re-read erroneous line
                backspace(nu_nml)
                read(nu_nml,fmt='(A)') tmpstr2
-               call abort_ice(subname//' ERROR: ' // trim(nml_name) // ' reading ' // &
+               call abort_ice(subname//'ERROR: ' // trim(nml_name) // ' reading ' // &
                     trim(tmpstr2), file=__FILE__, line=__LINE__)
             endif
          end do
@@ -277,34 +278,22 @@
                 nstreams = nstreams + 1
                 if (ns >= 2) then
                    if (histfreq(ns-1) == 'x') then
-                      call abort_ice(subname//' ERROR: histfreq all non x must be at start of array', &
-                           file=__FILE__, line=__LINE__)
+                      call abort_ice(subname//'ERROR: histfreq all non x must be at start of array')
                    endif
                 endif
          else if (histfreq(ns) /= 'x') then
-             write(nu_diag, * ) subname,' ns,histfreq = ',ns,histfreq(ns)
-             call abort_ice(subname//' ERROR: histfreq contains illegal element', &
-                  file=__FILE__, line=__LINE__)
+             call abort_ice(subname//'ERROR: histfreq contains illegal element')
          endif
       enddo
-      if (nstreams == 0 .and. my_task == master_task) write (nu_diag,*) subname,' WARNING: No history output'
+      if (nstreams == 0) write (nu_diag,*) 'WARNING: No history output'
       do ns1 = 1, nstreams
          do ns2 = 1, nstreams
             if (histfreq(ns1) == histfreq(ns2) .and. ns1/=ns2 &
                .and. my_task == master_task) then
-               call abort_ice(subname//' ERROR: histfreq elements must be unique', &
-                    file=__FILE__, line=__LINE__)
+               call abort_ice(subname//'ERROR: histfreq elements must be unique')
             endif
          enddo
       enddo
-
-      ! Turn on one-time grid output file
-      if (grid_outfile) then
-         nstreams = nstreams + 1
-         histfreq(nstreams) = 'g'
-         hist_avg(nstreams) = .false.
-         if (my_task == master_task) write (nu_diag,*) subname,' Writing one-time grid file'
-      endif
 
       if (.not. tr_iage) then
          f_iage = 'x'
@@ -455,6 +444,14 @@
          f_taubxE = f_taubx
          f_taubyE = f_tauby
       endif
+
+      ! write dimensions for 3D or 4D history variables
+      ! note: list of variables checked here is incomplete
+      if (f_aicen(1:1) /= 'x' .or. f_vicen(1:1) /= 'x' .or. &
+          f_Tinz (1:1) /= 'x' .or. f_Sinz (1:1) /= 'x') f_NCAT  = .true.
+      if (f_Tinz (1:1) /= 'x' .or. f_Sinz (1:1) /= 'x') f_VGRDi = .true.
+      if (f_Tsnz (1:1) /= 'x')                          f_VGRDs = .true.
+      if (tr_fsd)                                       f_NFSD  = .true.
 
       call broadcast_scalar (f_tlon, master_task)
       call broadcast_scalar (f_tlat, master_task)
@@ -613,6 +610,7 @@
       call broadcast_scalar (f_taubxE, master_task)
       call broadcast_scalar (f_taubyE, master_task)
       call broadcast_scalar (f_strength, master_task)
+      call broadcast_scalar (f_fract, master_task)
       call broadcast_scalar (f_divu, master_task)
       call broadcast_scalar (f_shear, master_task)
       call broadcast_scalar (f_vort, master_task)
@@ -1329,6 +1327,11 @@
              "compressive ice strength",                                 &
              "none", c1, c0,                                             &
              ns1, f_strength)
+
+         call define_hist_field(n_fract,"fracture","",tstr2D, tcstr, &
+             "fracture parameter derived from FSD",                                 &
+             "none", c1, c0,                                             &
+             ns1, f_fract)
 
          call define_hist_field(n_divu,"divu","%/day",tstr2D, tcstr, &
              "strain rate (divergence)",                           &
@@ -2328,11 +2331,9 @@
       ! increment field
       !---------------------------------------------------------------
 
-#ifndef __INTEL_LLVM_COMPILER
       !$OMP PARALLEL DO PRIVATE(iblk,i,j,ilo,ihi,jlo,jhi,this_block, &
       !$OMP             k,n,qn,ns,sn,rho_ocn,rho_ice,Tice,Sbr,phi,rhob,dfresh,dfsalt,sicen, &
       !$OMP             worka,workb,worka3,Tinz4d,Sinz4d,Tsnz4d)
-#endif
 
       do iblk = 1, nblocks
          this_block = get_block(blocks_ice(iblk),iblk)
@@ -2669,6 +2670,8 @@
              call accum_hist_field(n_taubyE, iblk, taubyE(:,:,iblk), a2D)
          if (f_strength(1:1)/= 'x') &
              call accum_hist_field(n_strength,iblk, strength(:,:,iblk), a2D)
+         if (f_fract(1:1)/= 'x') &
+             call accum_hist_field(n_fract,iblk, fract(:,:,iblk), a2D)
 
 ! The following fields (divu, shear, vort, sig1, and sig2) will be smeared
 !  if averaged over more than a few days.
@@ -3642,9 +3645,7 @@
          call accum_hist_snow (iblk)
 
       enddo                     ! iblk
-#ifndef __INTEL_LLVM_COMPILER
       !$OMP END PARALLEL DO
-#endif
 
       call icepack_warnings_flush(nu_diag)
       if (icepack_warnings_aborted()) call abort_ice(error_message=subname, &
@@ -4198,13 +4199,6 @@
         enddo
 
       endif  ! write_history or write_ic
-
-      ! Turn off one-time grid output file
-      if (histfreq(ns) == 'g') then
-         histfreq(ns) = 'x'
-         nstreams = nstreams - 1
-      endif
-
       enddo  ! nstreams
 
       !$OMP PARALLEL DO PRIVATE(iblk,i,j,ilo,ihi,jlo,jhi,this_block)
