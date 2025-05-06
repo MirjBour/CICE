@@ -229,8 +229,12 @@
          bgc_data_dir   ! directory for biogeochemistry data
 
       real (kind=dbl_kind), dimension(:), allocatable, public :: &
-         R_chl2N,       &  ! 3 algal chlorophyll to N (mg/mmol)
-         R_C2N             ! algal C to N (mole/mole)
+         R_C2N_DON      ! carbon to nitrogen mole ratio of DON pool
+
+      real (kind=dbl_kind), dimension(:), allocatable, public :: &
+         R_C2N     ,      & ! algal C to N (mole/mole)
+         R_chl2N   ,      & ! 3 algal chlorophyll to N (mg/mmol)
+         R_Si2N             ! silica to nitrogen mole ratio for algal groups
 
       ! floe size distribution
       real(kind=dbl_kind), dimension(:), allocatable, public ::  &
@@ -248,7 +252,7 @@
       real (kind=dbl_kind), dimension (:,:,:,:), allocatable, public :: &
          wave_spectrum, &  ! wave spectrum
          ! change in floe size distribution due to processes
-         d_afsd_newi, d_afsd_latg, d_afsd_latm, d_afsd_wave, d_afsd_weld
+         d_afsd_newi, d_afsd_latg, d_afsd_latm, d_afsd_wave, d_afsd_weld, d_afsd_nils, before_afsd_last, before_afsd_middle, before_afsd_second_last, after_afsd_last, after_afsd_middle, after_afsd_second_last
 
       character (len=35), public, allocatable :: c_fsd_range(:)
 
@@ -377,6 +381,13 @@
          d_afsd_latm    (nx_block,ny_block,nfsd,     max_blocks), & !
          d_afsd_wave    (nx_block,ny_block,nfsd,     max_blocks), & !
          d_afsd_weld    (nx_block,ny_block,nfsd,     max_blocks), & !
+         d_afsd_nils    (nx_block,ny_block,nfsd,     max_blocks), & !
+         before_afsd_last (nx_block,ny_block,nfsd,     max_blocks), & !
+         before_afsd_second_last (nx_block,ny_block,nfsd,     max_blocks), & !
+         before_afsd_middle (nx_block,ny_block,nfsd,     max_blocks), & !
+         after_afsd_last (nx_block,ny_block,nfsd,     max_blocks), & !
+         after_afsd_second_last (nx_block,ny_block,nfsd,     max_blocks), & !
+         after_afsd_middle (nx_block,ny_block,nfsd,     max_blocks), & !
          stat=ierr)
       if (ierr/=0) call abort_ice(subname//' Out of Memory5')
 

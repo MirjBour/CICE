@@ -876,12 +876,12 @@
       subroutine step_dyn_wave (dt)
 
       use ice_arrays_column, only: wave_spectrum, &
-          d_afsd_wave, floe_rad_l, floe_rad_c, wavefreq, dwavefreq
+          d_afsd_wave, floe_rad_l, floe_rad_c, wavefreq, dwavefreq, floe_binwidth, hin_max, d_afsd_nils, before_afsd_last, before_afsd_second_last, before_afsd_middle, after_afsd_last, after_afsd_second_last, after_afsd_middle
       use ice_domain_size, only: ncat, nfsd, nfreq
-      use ice_state, only: trcrn, aicen, aice, vice
+      use ice_state, only: trcrn, aicen, aice, vice, divu
       use ice_timers, only: ice_timer_start, ice_timer_stop, timer_column, &
           timer_fsd
-
+      use ice_grid, only: tarea
       real (kind=dbl_kind), intent(in) :: &
          dt      ! time step
 
@@ -948,7 +948,7 @@
                                             wave_spectrum  (i,j,:,  iblk), &
                                             wavefreq(:),   dwavefreq(:),   &
                                             trcrn          (i,j,:,:,iblk), &
-                                            d_afsd_wave    (i,j,:,  iblk))
+                                            d_afsd_wave    (i,j,:,  iblk),  divu(i,j,iblk), floe_binwidth(:),hin_max(:),d_afsd_nils(i,j,:,  iblk), tarea(i,j,iblk))
             afsdn       = trcrn(i,j,nt_fsd:nt_fsd+nfsd-1,:,iblk)
             do nc = 1, ncat
                tot = c0

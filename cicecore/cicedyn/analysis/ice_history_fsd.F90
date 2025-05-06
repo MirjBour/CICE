@@ -30,7 +30,7 @@
            f_afsd       = 'm', f_afsdn       = 'm', &
            f_dafsd_newi = 'm', f_dafsd_latg  = 'm', &
            f_dafsd_latm = 'm', f_dafsd_wave  = 'm', &
-           f_dafsd_weld = 'm', f_wave_sig_ht = 'm', &
+           f_dafsd_weld = 'm', f_dafsd_nils = 'd', f_before_afsd_last= 'h', f_before_afsd_second_last= 'h', f_before_afsd_middle= 'h', f_after_afsd_last= 'h', f_after_afsd_second_last= 'h', f_after_afsd_middle= 'h', f_wave_sig_ht = 'm', & !GW
            f_aice_ww    = 'x', f_diam_ww     = 'x', &
            f_hice_ww    = 'x', f_fsdrad      = 'x', &
            f_fsdperim   = 'x'
@@ -43,7 +43,7 @@
            f_afsd      , f_afsdn      , &
            f_dafsd_newi, f_dafsd_latg , &
            f_dafsd_latm, f_dafsd_wave , &
-           f_dafsd_weld, f_wave_sig_ht, &
+           f_dafsd_weld, f_dafsd_nils, f_after_afsd_last, f_after_afsd_middle, f_after_afsd_second_last, f_before_afsd_last, f_before_afsd_middle, f_before_afsd_second_last, f_wave_sig_ht, &
            f_aice_ww   , f_diam_ww    , &
            f_hice_ww   , f_fsdrad     , &
            f_fsdperim
@@ -56,10 +56,10 @@
            n_afsd      , n_afsdn      , &
            n_dafsd_newi, n_dafsd_latg , &
            n_dafsd_latm, n_dafsd_wave , &
-           n_dafsd_weld, n_wave_sig_ht, &
+           n_dafsd_weld, n_dafsd_nils, n_wave_sig_ht, &
            n_aice_ww   , n_diam_ww    , &
            n_hice_ww   , n_fsdrad     , &
-           n_fsdperim
+           n_fsdperim, n_after_afsd_last, n_after_afsd_middle, n_after_afsd_second_last, n_before_afsd_last, n_before_afsd_middle, n_before_afsd_second_last
 
 !=======================================================================
 
@@ -143,6 +143,13 @@
       call broadcast_scalar (f_dafsd_latm, master_task)
       call broadcast_scalar (f_dafsd_wave, master_task)
       call broadcast_scalar (f_dafsd_weld, master_task)
+      call broadcast_scalar (f_dafsd_nils, master_task)
+      call broadcast_scalar (f_before_afsd_last, master_task)
+      call broadcast_scalar (f_before_afsd_second_last, master_task)
+      call broadcast_scalar (f_before_afsd_middle, master_task)
+      call broadcast_scalar (f_after_afsd_last, master_task)
+      call broadcast_scalar (f_after_afsd_second_last, master_task)
+      call broadcast_scalar (f_after_afsd_middle, master_task)
       call broadcast_scalar (f_wave_sig_ht, master_task)
       call broadcast_scalar (f_aice_ww, master_task)
       call broadcast_scalar (f_diam_ww, master_task)
@@ -195,6 +202,13 @@
          f_dafsd_latm  = 'x'
          f_dafsd_wave  = 'x'
          f_dafsd_weld  = 'x'
+         f_dafsd_nils  = 'x'
+         f_before_afsd_last = 'x'
+         f_before_afsd_second_last = 'x'
+         f_before_afsd_middle = 'x'
+         f_after_afsd_last = 'x'
+         f_after_afsd_second_last = 'x'
+         f_after_afsd_middle = 'x'
          f_wave_sig_ht = 'x'
          f_fsdrad      = 'x'
          f_fsdperim    = 'x'
@@ -257,7 +271,36 @@
             call define_hist_field(n_dafsd_weld,"dafsd_weld","1/s",tstr3Df, tcstr, &
                "Change in fsd: welding",                       &
                "Avg over freq period", c1, c0, ns, f_dafsd_weld)
+         if (f_dafsd_nils(1:1) /= 'x') &
+            call define_hist_field(n_dafsd_nils,"dafsd_nils","1/s",tstr3Df, tcstr, &
+               "Change in fsd: welding",                       &
+               "Avg over freq period", c1, c0, ns, f_dafsd_nils)
+         if (f_before_afsd_last(1:1) /= 'x') &
+            call define_hist_field(n_before_afsd_last,"before_afsd_last","1/m",tstr3Df, tcstr, &
+               "areal floe size distribution",                 &
+               "per unit bin width ", c1, c0, ns, f_before_afsd_last)
+         if (f_before_afsd_second_last(1:1) /= 'x') &
+            call define_hist_field(n_before_afsd_second_last,"before_afsd_second_last","1/m",tstr3Df, tcstr, &
+               "areal floe size distribution",                 &
+               "per unit bin width ", c1, c0, ns, f_before_afsd_second_last)
+         if (f_before_afsd_middle(1:1) /= 'x') &
+            call define_hist_field(n_before_afsd_middle,"before_afsd_middle","1/m",tstr3Df, tcstr, &
+               "areal floe size distribution",                 &
+               "per unit bin width ", c1, c0, ns, f_before_afsd_middle)
+         if (f_after_afsd_last(1:1) /= 'x') &
+            call define_hist_field(n_after_afsd_last,"after_afsd_last","1/m",tstr3Df, tcstr, &
+               "areal floe size distribution",                 &
+               "per unit bin width ", c1, c0, ns, f_after_afsd_last)
+         if (f_after_afsd_second_last(1:1) /= 'x') &
+            call define_hist_field(n_after_afsd_second_last,"after_afsd_second_last","1/m",tstr3Df, tcstr, &
+               "areal floe size distribution",                 &
+               "per unit bin width ", c1, c0, ns, f_after_afsd_second_last)
+         if (f_after_afsd_middle(1:1) /= 'x') &
+            call define_hist_field(n_after_afsd_middle,"after_afsd_middle","1/m",tstr3Df, tcstr, &
+               "areal floe size distribution",                 &
+               "per unit bin width ", c1, c0, ns, f_after_afsd_middle)
          endif ! if (histfreq(ns) /= 'x')
+         
       enddo ! ns
 
       endif ! tr_fsd
@@ -295,6 +338,7 @@
                "per unit bin width", c1, c0, ns, f_afsdn)
 
          endif ! if (histfreq(ns) /= 'x') then
+
       enddo ! ns
 
       endif ! tr_fsd
@@ -314,7 +358,7 @@
          ncat_hist, accum_hist_field, n3Dacum, n4Dscum
       use ice_state, only: trcrn, aicen, vicen, aice
       use ice_arrays_column, only: wave_sig_ht, floe_rad_c, floe_binwidth, &
-         d_afsd_newi, d_afsd_latg, d_afsd_latm, d_afsd_wave, d_afsd_weld
+         d_afsd_newi, d_afsd_latg, d_afsd_latm, d_afsd_wave, d_afsd_weld,d_afsd_nils, before_afsd_last, before_afsd_second_last, before_afsd_middle, after_afsd_last, after_afsd_second_last, after_afsd_middle
 
       real (kind=dbl_kind), intent(in) :: &
          dt      ! time step
@@ -486,9 +530,29 @@
                                     d_afsd_wave(:,:,1:nfsd_hist,iblk)/dt, a3Df)
       if (f_dafsd_weld(1:1)/= 'x') &
              call accum_hist_field(n_dafsd_weld-n3Dacum, iblk, nfsd_hist, &
-                                    d_afsd_weld(:,:,1:nfsd_hist,iblk)/dt, a3Df)
+             d_afsd_weld(:,:,1:nfsd_hist,iblk)/dt, a3Df)
+      if (f_dafsd_nils(1:1)/= 'x') &
+             call accum_hist_field(n_dafsd_nils-n3Dacum, iblk, nfsd_hist, &
+                                    d_afsd_nils(:,:,1:nfsd_hist,iblk)/dt, a3Df)
+      if (f_before_afsd_last(1:1)/= 'x') &
+               call accum_hist_field(n_before_afsd_last-n3Dacum, iblk, nfsd_hist, &
+                                       before_afsd_last(:,:,1:nfsd_hist,iblk), a3Df)
+      if (f_before_afsd_second_last(1:1)/= 'x') & 
+               call accum_hist_field(n_before_afsd_second_last-n3Dacum, iblk, nfsd_hist, &
+                                       before_afsd_second_last(:,:,1:nfsd_hist,iblk), a3Df) 
+      if (f_before_afsd_middle(1:1)/= 'x') &
+               call accum_hist_field(n_before_afsd_middle-n3Dacum, iblk, nfsd_hist, &
+                                       before_afsd_middle(:,:,1:nfsd_hist,iblk), a3Df) 
+      if (f_after_afsd_last(1:1)/= 'x') &
+               call accum_hist_field(n_after_afsd_last-n3Dacum, iblk, nfsd_hist, &
+                                       after_afsd_last(:,:,1:nfsd_hist,iblk), a3Df)
+      if (f_after_afsd_second_last(1:1)/= 'x') &
+               call accum_hist_field(n_after_afsd_second_last-n3Dacum, iblk, nfsd_hist, &
+                                       after_afsd_second_last(:,:,1:nfsd_hist,iblk), a3Df)
+      if (f_after_afsd_middle(1:1)/= 'x') &
+               call accum_hist_field(n_after_afsd_middle-n3Dacum, iblk, nfsd_hist, &
+                                       after_afsd_middle(:,:,1:nfsd_hist,iblk), a3Df)
       endif ! a3Df allocated
-
       ! 4D floe size, thickness category fields
       if (allocated(a4Df)) then
 
