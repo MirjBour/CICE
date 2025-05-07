@@ -948,7 +948,7 @@
                                             wave_spectrum  (i,j,:,  iblk), &
                                             wavefreq(:),   dwavefreq(:),   &
                                             trcrn          (i,j,:,:,iblk), &
-                                            d_afsd_wave    (i,j,:,  iblk),  divu(i,j,iblk), floe_binwidth(:),hin_max(:),d_afsd_nils(i,j,:,  iblk), tarea(i,j,iblk))
+                                            d_afsd_wave    (i,j,:,  iblk),  divu(i,j,iblk), floe_binwidth(:),hin_max(:),d_afsd_nils(i,j,:,  iblk), tarea(i,j,iblk),i,j)
             afsdn       = trcrn(i,j,nt_fsd:nt_fsd+nfsd-1,:,iblk)
             do nc = 1, ncat
                tot = c0
